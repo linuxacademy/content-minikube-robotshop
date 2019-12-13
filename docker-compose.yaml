@@ -1,0 +1,149 @@
+version: '3'
+services:
+  mongodb:
+    build:
+      context: mongo
+    image: ${REPO}/rs-mongodb:${TAG}
+    networks:
+      - robot-shop
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+  redis:
+    image: redis:4.0.6
+    networks:
+      - robot-shop
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+  rabbitmq:
+    image: rabbitmq:3.7-management-alpine
+    networks:
+      - robot-shop
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+  catalogue:
+    build:
+      context: catalogue
+    image: ${REPO}/rs-catalogue:${TAG}
+    depends_on:
+      - mongodb
+    networks:
+      - robot-shop
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+  user:
+    build:
+      context: user
+    image: ${REPO}/rs-user:${TAG}
+    depends_on:
+      - mongodb
+      - redis
+    networks:
+      - robot-shop
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+  cart:
+    build:
+      context: cart
+    image: ${REPO}/rs-cart:${TAG}
+    depends_on:
+      - redis
+    networks:
+      - robot-shop
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+  mysql:
+    build:
+      context: mysql
+    image: ${REPO}/rs-mysql-db:${TAG}
+    cap_add:
+      - NET_ADMIN
+    networks:
+      - robot-shop
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+  shipping:
+    build:
+      context: shipping
+    image: ${REPO}/rs-shipping:${TAG}
+    depends_on:
+      - mysql
+    networks:
+      - robot-shop
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+  ratings:
+    build:
+      context: ratings
+    image: ${REPO}/rs-ratings:${TAG}
+    networks:
+      - robot-shop
+    depends_on:
+      - mysql
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+  payment:
+    build:
+      context: payment
+    image: ${REPO}/rs-payment:${TAG}
+    depends_on:
+      - rabbitmq
+    networks:
+      - robot-shop
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+  dispatch:
+    build:
+      context: dispatch
+    image: ${REPO}/rs-dispatch:${TAG}
+    depends_on:
+      - rabbitmq
+    networks:
+      - robot-shop
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+  web:
+    build:
+      context: web
+    image: ${REPO}/rs-web:${TAG}
+    depends_on:
+      - catalogue
+      - user
+      - shipping
+      - payment
+    ports:
+      - "8080:8080"
+    networks:
+      - robot-shop
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+    # Uncomment to enable Instana EUM
+    # environment:
+      # INSTANA_EUM_KEY: <your eum key here>
+
+networks:
+  robot-shop:
+

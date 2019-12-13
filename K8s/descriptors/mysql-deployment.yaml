@@ -1,0 +1,36 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose -f ../docker-compose.yaml convert
+    kompose.version: 1.10.0 (8bb0907)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: mysql
+  name: mysql
+spec:
+  replicas: 1
+  strategy: {}
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        io.kompose.service: mysql
+    spec:
+      containers:
+      - image: linuxacademycontent/rs-mysql-db:latest
+        name: mysql
+        securityContext:
+          capabilities:
+            add: ["NET_ADMIN"]
+        ports:
+        - containerPort: 3306
+        resources:
+          limits:
+            cpu: 200m
+            memory: 800Mi
+          requests:
+            cpu: 100m
+            memory: 400Mi
+      restartPolicy: Always
+status: {}
